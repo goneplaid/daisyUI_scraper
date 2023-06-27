@@ -18,11 +18,19 @@ def scrape():
         return jsonify({'error': 'Unable to retrieve component docs'}), 500
 
     soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table')
 
-    result = table.prettify()
+    table = soup.find('table').prettify()
 
-    return result
+    component_dict = {}
+    component_dict['table'] = table
+    component_dict['examples'] = {}
+
+    examples = soup.find_all('div', {'class': 'component-preview'})
+    for component in examples:
+        component_id = component.get('id')
+        component_dict['examples'][component_id] = component.prettify()
+
+    return component_dict
 
 
 if __name__ == '__main__':
