@@ -1,2 +1,3 @@
 # daisyUI_scraper
-A simple web service (Flask) that scrapes documentation for the daisyUI component library.
+
+A simple web service written with Flask that scrapes documentation for the daisyUI component library.
