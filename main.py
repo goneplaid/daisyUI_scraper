@@ -1,34 +1,62 @@
 from flask import Flask, jsonify, request
-import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+import pyperclip
 
 app = Flask(__name__)
 
 
 @app.route('/scrape', methods=['GET'])
 def scrape():
-    component = request.args.get('component')
-    if component is None:
+    example = request.args.get('component')
+    if example is None:
         return jsonify({'error': 'Missing component parameter'}), 400
 
-    url = f'https://daisyui.com/components/{component}'
-    response = requests.get(url)
+    url = f'https://daisyui.com/components/{example}'
 
-    if response.status_code != 200:
-        return jsonify({'error': 'Unable to retrieve component docs'}), 500
+    driver = webdriver.Chrome()
+    driver.get(url)
 
-    soup = BeautifulSoup(response.content, 'html.parser')
-
-    table = soup.find('table').prettify()
+    # Wait until at least one .component-preview is loaded
+    wait = WebDriverWait(driver, 10)
+    wait.until(EC.presence_of_element_located(
+        (By.TAG_NAME, "table")))
 
     component_dict = {}
-    component_dict['table'] = table
+
+    component_table = driver.find_element(By.TAG_NAME, 'table')
+    component_table_soup = BeautifulSoup(
+        component_table.get_attribute('innerHTML'), 'html.parser')
+    component_dict['table'] = component_table_soup.prettify()
+
     component_dict['examples'] = {}
 
-    examples = soup.find_all('div', {'class': 'component-preview'})
-    for component in examples:
-        component_id = component.get('id')
-        component_dict['examples'][component_id] = component.prettify()
+    component_examples = driver.find_elements(By.CSS_SELECTOR,
+                                              ".component-preview")
+    for example in component_examples:
+        example_tabs = example.find_element(
+            By.CLASS_NAME, 'tabs').find_elements(By.TAG_NAME, "button")
+        jsx_tab = example_tabs[-1]
+        driver.execute_script("arguments[0].scrollIntoView();", jsx_tab)
+        time.sleep(1)
+        jsx_tab.click()
+
+        copy_button = example.find_element(
+            By.CSS_SELECTOR, "[data-tip='copy']")
+        copy_button.click()
+
+        code_example = pyperclip.paste()
+
+        component_id = example.get_attribute('id')
+        component_dict['examples'][component_id] = code_example
+
+    for handle in driver.window_handles:
+        driver.switch_to.window(handle)
+        driver.close()
 
     return component_dict
 
