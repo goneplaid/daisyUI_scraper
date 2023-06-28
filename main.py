@@ -33,7 +33,7 @@ def scrape_docs(component):
         (By.TAG_NAME, "table")))
 
     component_dict = {}
-    component_dict['table'] = get_component_table(driver)
+    component_dict['classes'] = get_component_classes(driver)
     component_dict['examples'] = get_component_examples(driver)
 
     for handle in driver.window_handles:
@@ -43,11 +43,11 @@ def scrape_docs(component):
     return component_dict
 
 
-def get_component_table(driver):
-    component_table = driver.find_element(By.TAG_NAME, 'table')
-    component_table_soup = BeautifulSoup(
-        component_table.get_attribute('outerHTML'), 'html.parser')
-    return component_table_soup.prettify()
+def get_component_classes(driver):
+    component_classes = driver.find_element(By.TAG_NAME, 'table')
+    component_classes_soup = BeautifulSoup(
+        component_classes.get_attribute('outerHTML'), 'html.parser')
+    return component_classes_soup.prettify()
 
 
 def get_component_examples(driver):
