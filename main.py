@@ -25,7 +25,7 @@ def handle_request():
 
 
 def scrape_docs(component):
-    url = f'{BASE_URL}{component}'
+    url = f'{BASE_URL}{component.lower().replace(" ", "-")}'
     driver = webdriver.Chrome()
     driver.get(url)
 
